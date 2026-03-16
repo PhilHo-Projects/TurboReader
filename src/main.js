@@ -106,6 +106,12 @@ class TurboEngine {
         this.loadText(manifestoText);
     }
 
+    resetWordDisplay(left = 'Ready', pivot = '?', right = '') {
+        this.elLeft.textContent = left;
+        this.elPivot.textContent = pivot;
+        this.elRight.textContent = right;
+    }
+
     initVisualizerSync() {
         if (this.elLeftColumn && this.elVisualizerContainer) {
             const resizeObserver = new ResizeObserver(entries => {
@@ -244,8 +250,6 @@ class TurboEngine {
 
         this.isPlaying = true;
         this.elToggleBtn.textContent = "PAUSE";
-        this.elToggleBtn.classList.replace('bg-[#fde047]', 'bg-[#fde047]');
-        this.elToggleBtn.classList.replace('text-black', 'text-black'); // Red background, Black text
 
         const intervalMs = 60000 / this.wpm;
         this.intervalId = setInterval(() => this.tick(), intervalMs);
@@ -254,9 +258,8 @@ class TurboEngine {
     stop() {
         this.isPlaying = false;
         this.elToggleBtn.textContent = "START";
-        this.elToggleBtn.classList.replace('bg-[#fde047]', 'bg-[#fde047]');
-        this.elToggleBtn.classList.replace('text-black', 'text-black');
         clearInterval(this.intervalId);
+        this.intervalId = null;
     }
 
     togglePlay() {
@@ -265,7 +268,13 @@ class TurboEngine {
     }
 
     updateProgress() {
-        if (this.words.length === 0) return;
+        if (this.words.length === 0) {
+            this.elProgressBar.style.width = '0%';
+            this.elProgressText.textContent = '0%';
+            this.elProgressBar.style.backgroundColor = '#fde047';
+            return;
+        }
+
         const percent = Math.min(100, Math.floor(((this.currentIndex + 1) / this.words.length) * 100));
         this.elProgressBar.style.width = `${percent}%`;
         this.elProgressText.textContent = `${percent}%`;
@@ -285,7 +294,10 @@ class TurboEngine {
     }
 
     setSpeed(speed) {
-        this.wpm = Math.max(50, Math.min(900, speed));
+        const nextSpeed = Number.parseInt(speed, 10);
+        if (Number.isNaN(nextSpeed)) return;
+
+        this.wpm = Math.max(50, Math.min(900, nextSpeed));
         this.elWpmInput.value = this.wpm;
 
         if (this.isPlaying) {
@@ -298,6 +310,14 @@ class TurboEngine {
         this.words = text.trim().split(/\s+/).filter(w => w.length > 0);
         this.currentIndex = 0;
         this.stop();
+
+        if (this.words.length === 0) {
+            this.elVisualizer.innerHTML = '<p class="text-[#fde047] italic opacity-50">Paste or load some text to start reading...</p>';
+            this.resetWordDisplay();
+            this.updateProgress();
+            return;
+        }
+
         this.prepareVisualizer();
         this.renderWord(this.words[0]);
         this.updateProgress();
@@ -337,7 +357,7 @@ class TurboEngine {
             // Trigger a centering scroll if the word is past 80% depth or above the viewport
             if (relativeTop > visHeight * 0.8 || relativeTop < 0) {
                 const targetScroll = wordOffsetTop - (visHeight / 2) + (wordHeight / 2);
-                this.elVisualizer.scrollTo({ top: targetScroll, behavior: 'smooth' });
+                this.elVisualizer.scrollTo({ top: targetScroll, behavior: this.isPlaying ? 'auto' : 'smooth' });
             }
         }
     }
@@ -361,9 +381,7 @@ class TurboEngine {
         this.elTextInput.value = '';
         this.elFilePicker.value = '';
         this.elVisualizer.innerHTML = '<p class="text-[#fde047] italic opacity-50">Load some text to see the interactive visualizer...</p>';
-        this.elLeft.textContent = 'Ready';
-        this.elPivot.textContent = '?';
-        this.elRight.textContent = '';
+        this.resetWordDisplay();
         this.updateProgress();
     }
 }
