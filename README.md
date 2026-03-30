@@ -40,7 +40,8 @@ A high-performance **Rapid Serial Visual Presentation (RSVP)** reader designed f
 ## Deployment
 
 - Production is served from `https://philippeho.popnux.com/turboreader/`.
-- `npm run build` emits a static bundle configured for the `/turboreader/` subpath.
+- `npm run build` now emits a root-hosted static bundle by default, which works for Vercel.
+- Subpath deployments like `/turboreader/` are still supported by setting `VITE_BASE_PATH=/turboreader/` during the build.
 - The GitHub Actions workflow deploys `dist/` to the Ubuntu server and reloads Nginx.
 
 ---
